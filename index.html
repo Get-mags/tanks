@@ -1,0 +1,121 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aaron's Collection of Things</title>
+    <link rel="stylesheet" href="/css/foundation.css" />
+    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="/public/js/vendor/modernizr.js"></script>
+    <script src="/public/js/foundation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.7/socket.io.js"></script>
+    <script type="text/javascript" src="public/js/phaser.min.js"></script>
+    <script type="text/javascript" src="public/js/watch.js"></script>
+    <script type="text/javascript" src="public/js/easystar-0.2.0.min.js"></script>
+    <script type="text/javascript" src="public/js/corridors-client.js"></script>
+    
+    <script type="text/javascript" src="public/config.js"></script>
+    <script type="text/javascript" src="public/play-state.js"></script>
+    <script type="text/javascript" src="public/next-mission-state.js"></script>
+    <script type="text/javascript" src="public/multiplayer-setup.js"></script>
+    <script type="text/javascript" src="public/title-state.js"></script>
+    <script type="text/javascript" src="public/level-up.js"></script>
+    <script type="text/javascript" src="public/mechanics-commons.js"></script>
+    <script type="text/javascript" src="public/enemies-inheritance.js"></script>
+    <script type="text/javascript" src="public/player.js"></script>
+    <script type="text/javascript" src="public/objs.js"></script>
+    <script type="text/javascript" src="public/level-manager.js"></script>
+  </head>
+  <body>
+    <div id="hidden"></div>
+    
+  
+  <script type="text/javascript">
+
+  var level = 1;
+  var skillPts = 0;
+  var ready = false;
+
+  var isMultiplayer = false;
+  var multiSettings = {};
+  var playerId = uuid();
+  var socket;
+  var pathfind = new EasyStar.js();
+
+
+  var game = new Phaser.Game(GAME_WIDTH, GAME_HEIGHT, Phaser.AUTO, 'game');
+  game.state.add("game-title", titleState);
+  game.state.add("play-state", playState);
+  game.state.add("next-mission", nextMission);
+  game.state.add('multiplayer-lobby', multiplayerLobby);
+  game.state.add("level-up", levelUp);
+  game.state.start("game-title");
+
+
+  function uuid () {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+        return v.toString(16);
+    });
+  }
+  
+  function gameOver () {
+    cleanGame();
+    game.paused = true;
+    game.add.text(GAME_WIDTH/2, 100, "GAME OVER", {size: "32px", fille: "#FFF", align: "center"});
+    
+    if (isMultiplayer) socket.emit('lostLevel');
+    else {
+      if (PLAYER_LIVES > 1) {
+        PLAYER_LIVES -= 1;
+        setTimeout(restartLevel, 1500);
+      }
+      else {
+        level = 1;
+        skillPts = 0;
+        restoreConfig();
+        setTimeout(restart, 1500);
+      }
+    }
+  }
+
+  function win () {
+    cleanGame();
+    game.paused = true;
+    game.add.text(GAME_WIDTH/2, 100, "YOU WIN", {size: "32px", fille: "#FFF", align: "center"});
+    level++;
+
+    if (isMultiplayer) socket.emit('wonLevel');
+    
+    setTimeout(nextLevel, 1500);
+  }
+
+  function restartLevel () {
+    players = {};
+    game.paused = false;
+    game.state.start("next-mission");
+  }
+
+  function restart () {
+    game.paused = false;
+    players = {};
+    destroyAllEnemies();
+    game.state.start("game-title");
+  }
+
+  function nextLevel () {
+    players = {};
+    game.paused = false;
+    if (level % 2 == 0) {
+      skillPts++;
+      game.state.start("level-up");
+    }
+    else game.state.start("next-mission");
+  }
+
+
+  
+
+  </script>
+  </body>
+</html>
