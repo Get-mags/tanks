@@ -67,7 +67,7 @@
     if (isMultiplayer) socket.emit('lostLevel');
     else {
       if (PLAYER_LIVES > 1) {
-        PLAYER_LIVES += 1;
+        PLAYER_LIVES -= 1;
         setTimeout(restartLevel, 1500);
       }
       else {
